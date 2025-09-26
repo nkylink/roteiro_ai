@@ -18,7 +18,7 @@ body {
 
 /* --- Container Principal --- */
 .app-container {
-  width: 100%;
+  width: 40%;
   max-width: 800px;
   background: #0d0d0d;
   padding: 20px;
