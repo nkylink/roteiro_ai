@@ -1,51 +1,226 @@
-/* botão de voz com mesmo visual dos outros botões e compacto */
-.voice-button {
-  padding: 4px 8px;
-  border: 1px solid #333333;
-  border-radius: 3px;
-  cursor: pointer;
-  font-weight: 400;
-  font-size: 0.8em;
-  background-color: #222222;
-  color: #c9c9c9;
-  transition: background-color 0.1s, border-color 0.1s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.voice-button:hover {
-  background-color: #333333;
-  border-color: #666666;
-  color: #ffffff;
-}
-
-/* estilo quando está a gravar */
-.voice-button.recording {
-  background-color: #b30f0f; /* vermelho suave */
-  color: #ffffff;
-  border-color: #7a0a0a;
-}
-
-/* assegura textarea da cena igual à tua estética */
-.scene-textarea.scene-action-input {
-  min-height: 40px;
-  padding: 6px 8px;
-  border: 1px solid #1a1a1a;
-  border-radius: 2px;
-  background-color: #000000;
-  color: #ffffff;
-  margin-bottom: 8px;
-  width: 100%;
+/* --- Reset Global --- */
+* {
   box-sizing: border-box;
-  resize: vertical;
-  font-size: 0.95em;
-  line-height: 1.3;
+  margin: 0;
+  padding: 0;
 }
 
-/* para manter o botão REC alinhado com os outros (header) */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: #000;
+  color: #c9c9c9;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* --- Container Principal --- */
+.app-container {
+  width: 100%;
+  max-width: 800px;
+  background: #0d0d0d;
+  padding: 20px;
+  border: 1px solid #222;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.05);
+}
+
+/* --- Título --- */
+h1 {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 300;
+  color: #fff;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #222;
+  padding-bottom: 10px;
+}
+
+/* --- Cena --- */
+.scene-box {
+  background: #000;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  transition: border 0.2s ease;
+}
+
+.scene-box:hover {
+  border-color: #555;
+}
+
+.scene-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.scene-index {
+  color: #666;
+  font-size: 0.9rem;
+}
+
 .scene-actions {
   display: flex;
   gap: 6px;
-  align-items: center;
+}
+
+/* Botão de adicionar fala */
+.add-dialogue-button {
+  background: #222;
+  color: #c9c9c9;
+  border: 1px solid #333;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+.add-dialogue-button:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Botão de deletar cena */
+.delete-button {
+  background: transparent;
+  border: none;
+  color: #555;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.delete-button:hover {
+  color: #fff;
+}
+
+/* --- Caixa de descrição da cena --- */
+.scene-action-input {
+  width: 100%;
+  min-height: 50px;
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 4px;
+  color: #fff;
+  padding: 6px;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+.scene-action-input:focus {
+  outline: none;
+  border-color: #666;
+}
+
+/* --- Caixa de fala --- */
+.dialogue-box {
+  display: flex;
+  gap: 10px;
+  background: #0d0d0d;
+  padding: 8px;
+  border: 1px solid #1a1a1a;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.dialogue-inputs-compact {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dialogue-character-input {
+  width: 140px;
+  padding: 5px;
+  border: 1px solid #222;
+  border-radius: 4px;
+  background: #000;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.dialogue-line-input-compact {
+  flex: 1;
+  min-height: 35px;
+  padding: 5px;
+  border: 1px solid #222;
+  border-radius: 4px;
+  background: #0d0d0d;
+  color: #fff;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.dialogue-character-input:focus,
+.dialogue-line-input-compact:focus {
+  outline: none;
+  border-color: #666;
+}
+
+/* Botão de deletar fala */
+.delete-dialogue-button {
+  background: transparent;
+  border: none;
+  color: #555;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.delete-dialogue-button:hover {
+  color: #fff;
+}
+
+/* --- Botão principal "+" --- */
+.add-scene-button {
+  width: 100%;
+  padding: 12px;
+  background: #111;
+  color: #fff;
+  font-size: 1.8rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-scene-button:hover {
+  background: #222;
+}
+
+/* --- Exportação do roteiro final --- */
+.full-script-container {
+  margin-top: 20px;
+  background: #000;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.full-script-textarea {
+  width: 100%;
+  height: 250px;
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 6px;
+  color: #fff;
+  font-family: Consolas, monospace;
+  font-size: 0.9rem;
+  padding: 8px;
+  resize: none;
+}
+
+.copy-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: #c9c9c9;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.copy-button:hover {
+  background: #fff;
 }
