@@ -18,3 +18,8 @@
   },
   "include": ["src"]
 }
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  }
+}
