@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import './App.css';
 
 // --- Tipos ---
@@ -45,7 +45,12 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
         placeholder=""
         value={dialogue.character}
         onChange={(e) =>
-          onDialogueChange(sceneId, dialogue.id, 'character', e.target.value.toUpperCase())
+          onDialogueChange(
+            sceneId,
+            dialogue.id,
+            'character',
+            e.target.value.toUpperCase()
+          )
         }
       />
       <textarea
@@ -86,9 +91,6 @@ interface SceneBoxProps {
     value: string
   ) => void;
   onDeleteDialogue: (sceneId: string, dialogueId: string) => void;
-  onStartVoice: (sceneId: string) => void;
-  onStopVoice: () => void;
-  isRecording: boolean;
 }
 
 const SceneBox: React.FC<SceneBoxProps> = ({
@@ -104,10 +106,47 @@ const SceneBox: React.FC<SceneBoxProps> = ({
   onAddDialogue,
   onDialogueChange,
   onDeleteDialogue,
-  onStartVoice,
-  onStopVoice,
-  isRecording,
 }) => {
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  const toggleRecording = () => {
+    const SpeechRecognitionClass =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionClass) {
+      alert('Seu navegador não suporta reconhecimento de voz.');
+      return;
+    }
+
+    if (!listening) {
+      const recognition = new SpeechRecognitionClass();
+      recognition.lang = 'pt-BR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        onContentChange(scene.id, scene.content + ' ' + transcript);
+      };
+
+      recognition.onend = () => {
+        setListening(false);
+      };
+
+      recognition.start();
+      recognitionRef.current = recognition;
+      setListening(true);
+    } else {
+      recognitionRef.current?.stop();
+      setListening(false);
+    }
+  };
+
   return (
     <div
       className="scene-box"
@@ -123,11 +162,11 @@ const SceneBox: React.FC<SceneBoxProps> = ({
         <span className="scene-index">{index + 1}</span>
         <div className="scene-actions">
           <button
-            className={`voice-button ${isRecording ? 'recording' : ''}`}
-            onClick={() => (isRecording ? onStopVoice() : onStartVoice(scene.id))}
-            title="Gravar voz"
+            className="voice-button"
+            onClick={toggleRecording}
+            title="Gravar Cena"
           >
-            {isRecording ? '⏹ Parar' : '🎤 Rec'}
+            {listening ? '⏹ Parar' : '🎤 Rec'}
           </button>
           <button
             className="add-dialogue-button"
@@ -147,10 +186,10 @@ const SceneBox: React.FC<SceneBoxProps> = ({
       </header>
 
       <textarea
-        className="scene-action-input"
+        className="scene-textarea scene-action-input"
         value={scene.content}
         onChange={(e) => onContentChange(scene.id, e.target.value)}
-        placeholder=""
+        placeholder={''}
       />
 
       <div className="dialogue-list">
@@ -172,10 +211,7 @@ const SceneBox: React.FC<SceneBoxProps> = ({
 const App: React.FC = () => {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [recordingSceneId, setRecordingSceneId] = useState<string | null>(null);
-  const recognitionRef = React.useRef<SpeechRecognition | null>(null);
 
-  // --- Gerenciar Cenas ---
   const addScene = useCallback(() => {
     const newScene: Scene = { id: generateId(), content: '', dialogues: [] };
     setScenes((prev) => [...prev, newScene]);
@@ -185,7 +221,7 @@ const App: React.FC = () => {
   }, []);
 
   const deleteScene = useCallback((id: string) => {
-    setScenes((prev) => prev.filter((s) => s.id !== id));
+    setScenes((prev) => prev.filter((scene) => scene.id !== id));
   }, []);
 
   const handleContentChange = useCallback((id: string, newContent: string) => {
@@ -196,55 +232,69 @@ const App: React.FC = () => {
     );
   }, []);
 
-  // --- Gerenciar Falas ---
   const addDialogue = useCallback((sceneId: string) => {
     const newDialogue: Dialogue = { id: generateId(), character: '', line: '' };
     setScenes((prev) =>
-      prev.map((s) =>
-        s.id === sceneId ? { ...s, dialogues: [...s.dialogues, newDialogue] } : s
+      prev.map((scene) =>
+        scene.id === sceneId
+          ? { ...scene, dialogues: [...scene.dialogues, newDialogue] }
+          : scene
       )
     );
   }, []);
 
   const deleteDialogue = useCallback((sceneId: string, dialogueId: string) => {
     setScenes((prev) =>
-      prev.map((s) =>
-        s.id === sceneId
-          ? { ...s, dialogues: s.dialogues.filter((d) => d.id !== dialogueId) }
-          : s
+      prev.map((scene) =>
+        scene.id === sceneId
+          ? {
+              ...scene,
+              dialogues: scene.dialogues.filter((d) => d.id !== dialogueId),
+            }
+          : scene
       )
     );
   }, []);
 
   const handleDialogueChange = useCallback(
-    (sceneId: string, dialogueId: string, field: 'character' | 'line', value: string) => {
+    (
+      sceneId: string,
+      dialogueId: string,
+      field: 'character' | 'line',
+      value: string
+    ) => {
       setScenes((prev) =>
-        prev.map((s) =>
-          s.id === sceneId
+        prev.map((scene) =>
+          scene.id === sceneId
             ? {
-                ...s,
-                dialogues: s.dialogues.map((d) =>
+                ...scene,
+                dialogues: scene.dialogues.map((d) =>
                   d.id === dialogueId ? { ...d, [field]: value } : d
                 ),
               }
-            : s
+            : scene
         )
       );
     },
     []
   );
 
-  // --- Drag and Drop ---
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
     setDraggedId(id);
     e.currentTarget.classList.add('dragging');
     e.dataTransfer.setData('text/plain', id);
   };
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetId: string) => {
     e.preventDefault();
+    e.currentTarget.classList.remove('dragging-over');
     const sourceId = draggedId;
     setDraggedId(null);
+    e.currentTarget.classList.remove('dragging');
     if (!sourceId || sourceId === targetId) return;
 
     const sourceIndex = scenes.findIndex((s) => s.id === sourceId);
@@ -256,12 +306,77 @@ const App: React.FC = () => {
     newScenes.splice(targetIndex, 0, movedScene);
     setScenes(newScenes);
   };
+
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const target = e.currentTarget;
-    if (target.dataset.sceneId !== draggedId) {
-      target.classList.add('dragging-over');
+    if (e.currentTarget.dataset.sceneId !== draggedId) {
+      e.currentTarget.classList.add('dragging-over');
     }
   };
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) =>
-    e
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragging-over');
+  };
+
+  const formatScenesForExport = () =>
+    scenes
+      .map((scene, index) => {
+        let script = `${index + 1} - ${scene.content.trim()}\n`;
+        scene.dialogues.forEach((d) => {
+          if (d.character.trim()) script += `${d.character.trim().toUpperCase()}\n`;
+          if (d.line.trim()) script += `- ${d.line.trim()}\n`;
+        });
+        return script + '\n';
+      })
+      .join('');
+
+  return (
+    <div className="app-container">
+      <h1>Roteiro</h1>
+      <div className="scene-list">
+        {scenes.map((scene, index) => (
+          <SceneBox
+            key={scene.id}
+            scene={scene}
+            index={index}
+            onContentChange={handleContentChange}
+            onDelete={deleteScene}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onAddDialogue={addDialogue}
+            onDialogueChange={handleDialogueChange}
+            onDeleteDialogue={deleteDialogue}
+          />
+        ))}
+        <button className="add-scene-button" onClick={addScene}>
+          +
+        </button>
+      </div>
+      {scenes.length > 0 && (
+        <div className="full-script-container">
+          <h2>Roteiro Final</h2>
+          <textarea
+            className="full-script-textarea"
+            readOnly
+            value={formatScenesForExport()}
+            rows={20}
+          />
+          <button
+            className="copy-button"
+            onClick={() =>
+              navigator.clipboard.writeText(formatScenesForExport())
+            }
+          >
+            Copiar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default App;
