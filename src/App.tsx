@@ -106,7 +106,7 @@ const SceneBox: React.FC<SceneBoxProps> = ({
               onClick={() => onStopRec(scene.id)}
               title="Parar gravação"
             >
-              ⏹ Parar
+              ⏹ 
             </button>
           ) : (
             <button
@@ -114,7 +114,7 @@ const SceneBox: React.FC<SceneBoxProps> = ({
               onClick={() => onStartRec(scene.id)}
               title="Gravar cena"
             >
-              🎤 Rec
+              🔴
             </button>
           )}
 
